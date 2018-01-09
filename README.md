@@ -12,7 +12,7 @@ GUI built with Tkinter<br>
 <img src="/img/chesspic1.jpg" alt="Chess Gam" width="50%">
 
 ### Integration with Stockfish:
-Download the binaries from https://stockfishchess.org/download/ for your operating system and move it to the root directory.
+Download the binaries from <a href="https://stockfishchess.org/download/">Stockfish</a> for your operating system and move it to the root directory.
 
 ### Custom Engine:
 Custom engine built with standard chess AI techniques: 
@@ -20,5 +20,5 @@ Custom engine built with standard chess AI techniques:
 2. Position evaluation through piece square tables and piece values.
 
 ### Sources:
-Image assets: <a href="https://en.wikipedia.org/wiki/User:Cburnett">Colin M.L. Burnett</a> (CC, GFDL, BSD, GPL)
+Image assets:  (CC, GFDL, BSD, GPL)
 <br>Piece-square tables from Sunfish: https://github.com/thomasahle/sunfish
