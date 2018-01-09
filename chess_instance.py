@@ -11,8 +11,6 @@ class ChessInstance:
 
     def __init__(self, mode, stockfish=None, cust_ai=None):
         self.board = standardBoard()
-        # "w" KQkq - 0 1
-        # 0      #1 2 3 4         #5   #6    #7     # 8
         self.speshuls = [white] + [True] * 4 + [None] * 2 + [0] + [1]
         # 5 is empassant
         # 6 is pawn upgrade
@@ -43,7 +41,7 @@ class ChessInstance:
         sys_name = platform.system()
         proc_name = None
         procStrings = {
-            'Windows':'stockfish_8_x64.exe',
+            'Windows': 'stockfish_8_x64.exe',
             'Darwin': 'stockfish-8-64',
             'Linux': 'stockfish_8_x64'
         }
@@ -70,7 +68,6 @@ class ChessInstance:
         self.put('setoption name Hash value 128')
         self.put('setoption name Threads value 4')
         self.put('setoption name Minimum Thinking Time value 300')
-        # self.put('setoption name Skill Level value 1')
         self.put('ucinewgame')
 
     def put(self, command):
@@ -94,7 +91,6 @@ class ChessInstance:
         if self.mode == CONSOLE:
             self.consoleGame()
         elif self.mode == GUI:
-            # print('g')
             self.guiGame()
 
     def guiGame(self):
@@ -103,36 +99,26 @@ class ChessInstance:
     def submitMove(self, val):
         applyMove(val, self.board, self.speshuls)
 
-        if self.speshuls[0] == black:
-            self.speshuls[8] += 1
-
-        self.speshuls[0] = other(self.speshuls[0])
-
         if self.stockfish == self.speshuls[0]:
             self.doStockfish(False)
+        if self.custom_ai == self.speshuls[0]:
+            self.doCust()
 
-        isCheckk = isCheck(self.speshuls[0], self.board, self.speshuls, True)
-
-        validmoves = listAllValidMoves(self.speshuls[0], self.board, self.speshuls, isCheckk)
+        isCheckk, validmoves = self.checkAndValidMoves(True)
 
         print(fenRepresentation(self.board, self.speshuls))
 
         return isCheckk, validmoves
 
-    def validMoves(self):
-        isCheckk = isCheck(self.speshuls[0], self.board, self.speshuls, True)
-
+    def checkAndValidMoves(self, isGUI=False):
+        isCheckk = isCheck(self.board, self.speshuls, True)
         validmoves = listAllValidMoves(self.speshuls[0], self.board, self.speshuls, isCheckk)
         return isCheckk, validmoves
 
-    # def piece_owner(self, val):
-    #     return owner(val)
-
     def consoleGame(self):
         while True:
-            isCheckk = isCheck(self.speshuls[0], self.board, self.speshuls, False)
+            isCheckk, validmoves = self.checkAndValidMoves()
 
-            validmoves = listAllValidMoves(self.speshuls[0], self.board, self.speshuls, isCheckk)
             if len(validmoves) == 0:
                 if isCheckk:
                     print("Checkmate", "white" if self.speshuls[0] == white else "black")
@@ -150,23 +136,19 @@ class ChessInstance:
 
             applyMove(val, self.board, self.speshuls)
 
-            if self.speshuls[0] == black:
-                self.speshuls[8] += 1
-
-            self.speshuls[0] = other(self.speshuls[0])
-
             if self.stockfish == self.speshuls[0]:
                 self.doStockfish()
+            if self.custom_ai == self.speshuls[0]:
+                self.doCust()
 
     def stockfishMove(self, start, end, prin=True):
         if prin:
             printBoard(self.board, True, True)
             print()
             print()
-        # not sure what stockfish's notation for castling
+
         selected = self.board[start[0]][start[1]]
         if selected.lower() == "k" and (start[0], start[1], end[0], end[1]) in castlingPlaces:
-            # print("castling!")
             applyCastling(KSCAST if end[1] == 6 else QSCAST, self.board, self.speshuls)
         else:
             applyNormal(self.board, end, start, selected, self.speshuls)
@@ -177,11 +159,9 @@ class ChessInstance:
         self.speshuls[0] = other(self.speshuls[0])
 
     def doStockfish(self, prin=True):
-        # print("stok sok")
         fen = fenRepresentation(self.board, self.speshuls)
         self.put('position fen ' + fen)
         self.put('go')
-        # self.put('go movetime 1000')
         time.sleep(0.1)
         val = None
         while val is None:
@@ -196,9 +176,12 @@ class ChessInstance:
         start, end, promo = processTS(move[:2]), processTS(move[2:4]), move[4:]
         if promo:
             self.speshuls[6] = promo
-        # print(start, end)
         self.stockfishMove(start, end, prin)
 
     def doCust(self):
         move = self.cust.calcMove()
-
+        if move is None:
+            return isCheck(self.board, self.speshuls, False), None
+        if move[0].lower() == "p" and (move[2][0] == 0 or move[2][0] == 7):
+            self.speshuls[6] = 'q'
+        applyMove(move, self.board, self.speshuls)

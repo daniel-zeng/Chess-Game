@@ -1,12 +1,10 @@
-from chess_instance import *
+from chess_instance import white, black, GUI, CONSOLE, ChessInstance
 
 def main():
     prompt()
 
     val, stockfish, useCustom = processInput()
-    # print(val, stockfish, useCustom)
     assert not(stockfish and useCustom)
-    # val, stockfish = CONSOLE, True
     print()
 
     c = ChessInstance(val, stockfish, useCustom)

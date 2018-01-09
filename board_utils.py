@@ -39,50 +39,8 @@ movement = {
 }
 pieces = "KRBNQP"
 
-def fenRepresentation(board, speshuls):
-    fen = ""
-    count = 0
-    for row in range(8):
-        for col in range(8):
-            if not board[row][col]:
-                count += 1
-            else:
-                if count:
-                    fen += str(count)
-                    count = 0
-                fen += board[row][col]
-        if count:
-            fen += str(count)
-            count = 0
-        if row != 7:
-            fen += "/"
-    fen += " "
-    fen += "w" if speshuls[0] == white else "b"
-    fen += " "
-    if speshuls[1] or speshuls[2] or speshuls[3] or speshuls[4]:
-        if speshuls[1]:
-            fen += "K"
-        if speshuls[2]:
-            fen += "Q"
-        if speshuls[3]:
-            fen += "k"
-        if speshuls[4]:
-            fen += "q"
-    else:
-        fen += "-"
-    fen += " "
-
-    if speshuls[5]:
-        fen += colToFile(speshuls[5][1]) + str(rowToRank(speshuls[5][0]))
-    else:
-        fen += "-"
-    fen += " {} {}".format(speshuls[7], speshuls[8])
-
-    return fen
-
 
 ### board manipulation and input utilities ###
-
 
 
 def listAllValidMoves(player, board, speshuls, isCheck):
@@ -104,17 +62,18 @@ def listAllValidMoves(player, board, speshuls, isCheck):
                 validmoves.append(QSCAST)
     return validmoves
 
+
 def allMovesinPieces(player, board, speshuls, mode):
     allPiece_Pos = getAllPieces(player, board)
     return getAllMoveInPieces(player, allPiece_Pos, board, speshuls, mode)
 
 
-def isCheck(player, board, speshuls, isGUI):
+def isCheck(board, speshuls, isGUI):
     # get all moves for other player
-    otherMoves = allMovesinPieces(other(player), board, speshuls, "combo" if isGUI else "list")
+    otherMoves = allMovesinPieces(other(speshuls[0]), board, speshuls, "combo" if isGUI else "list")
 
     # get current king
-    king, king_pos = selectPieces("K" if player == white else "k", board)[0]
+    king, king_pos = selectPieces("K" if speshuls[0] == white else "k", board)[0]
 
     if isGUI:
         for piece, piece_pos, move in otherMoves:
@@ -126,7 +85,7 @@ def isCheck(player, board, speshuls, isGUI):
 
 
 def isValidMove(player, start, end, piece, board, speshuls):
-    # somehow make a copy move and verify if king in danger
+    # make a copy move and verify if king in danger
     originR, originC = start
 
     hypotBoard = copy.deepcopy(board)
@@ -134,7 +93,7 @@ def isValidMove(player, start, end, piece, board, speshuls):
     hypotBoard[originR][originC] = 0
     hypotBoard[end[0]][end[1]] = piece
 
-    return not isCheck(player, hypotBoard, speshuls, False)
+    return not isCheck(hypotBoard, speshuls, False)
 
 
 def applyMove(val, board, speshuls):
@@ -145,17 +104,23 @@ def applyMove(val, board, speshuls):
         # print(val)
         applyNormal(board, target_coord, start, selected, speshuls)
 
+    # apply fullmove
+    if speshuls[0] == black:
+        speshuls[8] += 1
+
+    # swap player
+    speshuls[0] = other(speshuls[0])
+
+
 def applyNormal(board, end, start, piece, speshuls):
     # no error checking cuz speed, redundancy
     targetOrig = board[end[0]][end[1]]
     originR, originC = start
 
-    #apply halfmove
-    if piece.lower() == "p" or targetOrig != 0:
-        speshuls[7] = 0
-    else:
-        speshuls[7] += 1
+    # apply halfmove
+    applyHalfmove(piece.lower() == "p", targetOrig != 0, speshuls)
 
+    # apply promotion
     if speshuls[6]:
         piece = speshuls[6].upper() if piece.isupper() else speshuls[6]
         speshuls[6] = None
@@ -163,20 +128,22 @@ def applyNormal(board, end, start, piece, speshuls):
     board[originR][originC] = 0
     board[end[0]][end[1]] = piece
 
-
+    # empassant capture
     if piece.lower() == "p" and end == speshuls[5]:
         board[originR][end[1]] = 0
 
-    #specials checking
-    applySpecials(end, start, piece, speshuls)
+    # specials checking
+    applyNormalSpecials(end, start, piece, speshuls, targetOrig != 0 and targetOrig.lower() == "r")
 
-def applySpecials(end, start, piece, speshuls):
+
+def applyNormalSpecials(end, start, piece, speshuls, captureRook):
     if piece.lower() == "p" and abs(end[0] - start[0]) == 2:
-        #add empassant square
+        # add empassant square
         speshuls[5] = (start[0] + (1 if piece == "p" else -1), start[1])
     else:
         speshuls[5] = None
 
+    # modify castling rights
     if piece == "K":
         speshuls[1] = False
         speshuls[2] = False
@@ -195,8 +162,24 @@ def applySpecials(end, start, piece, speshuls):
         elif start == (0, 7):
             speshuls[3] = False
 
+    if captureRook:
+        if end == (7, 0):
+            speshuls[2] = False
+        elif end == (7, 7):
+            speshuls[1] = False
+        elif end == (0, 0):
+            speshuls[4] = False
+        elif end == (0, 7):
+            speshuls[3] = False
+
+
 def applyCastling(val, board, speshuls):
     row = None
+
+    # apply halfmove
+    applyHalfmove(False, False, speshuls)
+
+    # Apply castling rights
     if speshuls[0] == white:
         speshuls[1] = False
         speshuls[2] = False
@@ -206,6 +189,7 @@ def applyCastling(val, board, speshuls):
         speshuls[4] = False
         row = 0
 
+    # Applying castling to the board
     board[row][4] = 0
     if val == KSCAST:
         board[row][5] = "R" if speshuls[0] == white else "r"
@@ -218,23 +202,30 @@ def applyCastling(val, board, speshuls):
         board[row][3] = "R" if speshuls[0] == white else "r"
 
 
+def applyHalfmove(isPawn, isCapture, speshuls):
+    if isPawn or isCapture:
+        speshuls[7] = 0
+    else:
+        speshuls[7] += 1
+
+
 def verifyCastling(val, board, speshuls):
     row = None
     if speshuls[0] == white:
+        row = 7
         if val == KSCAST and not speshuls[1]:
             return False
         if val == QSCAST and not speshuls[2]:
             return False
-        #check open slots
-        checkOpen = None
-        row = 7
+
     else:
+        row = 0
         if val == KSCAST and not speshuls[3]:
             return False
         if val == QSCAST and not speshuls[4]:
             return False
-        row = 0
 
+    # check open slots
     if val == KSCAST:
         checkOpen = [(row, 5), (row, 6)]
     else:
@@ -245,12 +236,11 @@ def verifyCastling(val, board, speshuls):
         if board[r][c]:
             return False
 
-        #check if these open positions are under possible check
+        # check if these open positions are under possible check
         hypotBoard = copy.deepcopy(board)
-        #orig king position
         hypotBoard[row][4] = 0
         hypotBoard[r][c] = "K" if speshuls[0] == white else "k"
-        if isCheck(speshuls[0], hypotBoard, speshuls, False):
+        if isCheck(hypotBoard, speshuls, False):
             return False
 
     return True
@@ -275,8 +265,6 @@ def inputLoopProcessor(player, mode, board, speshuls, isCheck):
             print("Invalid move: Castling cannot be made")
             continue
 
-
-
         piece, target_coord, typeT, disc = val
         possiblePieces = selectPiecesRC(piece.upper() if player == white else piece.lower(), board, typeT, disc)
         prunedPieces = []
@@ -296,21 +284,12 @@ def inputLoopProcessor(player, mode, board, speshuls, isCheck):
 
         if selected.lower() == "p" and (target_coord[0] == 0 or target_coord[0] == 7) and not speshuls[6]:
             print("Invalid move: please specify promotion piece")
-            # print(speshuls[6])
             continue
 
         if isValidMove(player, pos, target_coord, selected, board, speshuls):
             return selected, pos, target_coord
         else:
             print("Invalid move: either under checkmate or other")
-
-
-# def inputIntent(player, mode, board, speshuls):
-#     if mode == ALGEBRAIC:
-#         return processAlgebraic(player, mode, board, speshuls)
-#     else:
-#         print("not implemented gui rc")
-#         exit()
 
 
 def processAlgebraic(player, mode, board, speshuls):
@@ -343,6 +322,7 @@ def getAllMoveInPieces(player, piece_and_pos, board, speshuls, mode):
             for move in getMoves(player, piece.lower(), pos[0], pos[1], board, speshuls):
                 totalMoves.append((piece, pos, move))
     return totalMoves
+
 
 def selectPiecesRC(piece, board, typeT=None, disc=None):
     getPos = lambda item: item[1]
@@ -395,6 +375,7 @@ def standardBoard():
 
     return board
 
+
 def printBoard(b, doRoCo, doAlg):
     if doRoCo:
         print(" ", end=" ")
@@ -427,11 +408,54 @@ def owner(pce):
         return white
     return black
 
+
 def other(player):
     return white if player == black else black
 
+
+def fenRepresentation(board, speshuls):
+    fen = ""
+    count = 0
+    for row in range(8):
+        for col in range(8):
+            if not board[row][col]:
+                count += 1
+            else:
+                if count:
+                    fen += str(count)
+                    count = 0
+                fen += board[row][col]
+        if count:
+            fen += str(count)
+            count = 0
+        if row != 7:
+            fen += "/"
+    fen += " "
+    fen += "w" if speshuls[0] == white else "b"
+    fen += " "
+    if speshuls[1] or speshuls[2] or speshuls[3] or speshuls[4]:
+        if speshuls[1]:
+            fen += "K"
+        if speshuls[2]:
+            fen += "Q"
+        if speshuls[3]:
+            fen += "k"
+        if speshuls[4]:
+            fen += "q"
+    else:
+        fen += "-"
+    fen += " "
+
+    if speshuls[5]:
+        fen += colToFile(speshuls[5][1]) + str(rowToRank(speshuls[5][0]))
+    else:
+        fen += "-"
+    fen += " {} {}".format(speshuls[7], speshuls[8])
+
+    return fen
+
+
 ###### piece movement logic ######
-# pass in piece as raw type! (lowercase)
 def getMoves(player, piece, row, col, board, speshuls):
     q = []
     assert piece.islower()
@@ -443,7 +467,7 @@ def getMoves(player, piece, row, col, board, speshuls):
         if canMoveToGeneral(player, moveOne[0], moveOne[1], True, board):
             q.append(moveOne)
 
-            #cuz can only moveTwo if can moveone
+            # cuz can only moveTwo if can move one
             if player == white and row == 6 or player == black and row == 1:
                 moveTwo = (row + direct * 2, col)
                 if canMoveToGeneral(player, moveTwo[0], moveTwo[1], True, board):
@@ -457,8 +481,6 @@ def getMoves(player, piece, row, col, board, speshuls):
         if canMoveToPwnCap(player, rightCap[0], rightCap[1], board, speshuls):
             q.append(rightCap)
 
-        # for empassant captures:
-        # add special case to that array
     elif piece == "k":
         for dir in movement["r"] + movement["b"]:
             if canMoveToGeneral(player, row + dir[0], col + dir[1], False, board):
@@ -477,10 +499,6 @@ def getMoves(player, piece, row, col, board, speshuls):
             q += canMoveToRecursive(player, row + dir[0], col + dir[1], dir[0], dir[1], board)
     return q
 
-
-# data abstraction notes:
-# board is 0 if empty
-# else it's just cap or small case letters
 
 def canMoveToGeneral(player, r_new, c_new, is_pawn, board):
     if not inBounds(r_new, c_new):
@@ -512,6 +530,7 @@ def canMoveToPwnCap(player, r_new, c_new, board, speshuls):
     if not inBounds(r_new, c_new):
         return False
 
+    # empassant case
     if (r_new, c_new) == speshuls[5]:
         return True
 
@@ -520,7 +539,6 @@ def canMoveToPwnCap(player, r_new, c_new, board, speshuls):
         return False
 
     return owner(piece) != player
-    # or square in emapssant
 
 
 def inBounds(r, c):
@@ -534,7 +552,6 @@ def inBounds(r, c):
 
 ###### algebraic selection logic ######
 
-# "k", (4, 3), type, disc
 def algebraicToRC(alg, player, board, speshuls):
     if alg == "0-0" or alg == "O-O":
         return KSCAST
@@ -548,7 +565,7 @@ def algebraicToRC(alg, player, board, speshuls):
             return False
         piece = None
 
-        # pawn promotion case:
+        # pawn promotion case
         if "=" in alg or alg[-1].lower() in "rbnq":
             alg = alg.replace("=", "")
             speshuls[6] = alg[-1].lower()
@@ -560,7 +577,7 @@ def algebraicToRC(alg, player, board, speshuls):
         if len(alg) < 2:
             return False
 
-        # get target square:
+        # get target square
         target = alg[-2:]
         alg = alg[:-2]
 
@@ -627,6 +644,8 @@ def processDisc(inpt):
 
 # returns false if not valid target square selector
 validFirst = "abcdefgh"
+
+
 def processTS(selection):
     first, second = selection
     if first.isalpha() and second.isdigit():

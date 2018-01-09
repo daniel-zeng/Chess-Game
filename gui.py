@@ -25,8 +25,6 @@ class ChessGUI:
         self.canvas = Canvas(self.tk, width=leng * ChessGUI.side, height=leng * ChessGUI.side,
                              highlightthickness=0)
         self.canvas.bind("<Button-1>", self.click)
-        # canvas.create_rectangle(0, 0, 100, 10, fill=ChessGUI.darkColor, width=0)
-        # canvas.create_rectangle(550, 560, 600, 600, fill=ChessGUI.lightColor, width=0)
 
         self.ci = ci
         self.firstClick = None
@@ -36,7 +34,7 @@ class ChessGUI:
 
         self.pieces = self.loadPieces()
         self.drawBoard()
-        self.checkPos, self.validmoves = self.ci.validMoves()
+        self.checkPos, self.validmoves = self.ci.checkAndValidMoves(True)
         self.drawPieces()
         self.canvas_focus = True
 
@@ -63,7 +61,6 @@ class ChessGUI:
             if click2:
                 # valid click
                 self.firstClick = None
-                # print(click2[0].lower(), click2[2][0] )
                 if click2[0].lower() == "p" and (click2[2][0] == 0 or click2[2][0] == 7):
                     self.tk.wait_window(self.showPromotion())
                 self.checkPos, self.validmoves = self.ci.submitMove(click2)
@@ -136,6 +133,7 @@ class ChessGUI:
         dot_width = self.leng / 3.5
         x = (c + 0.5) * self.leng
         y = (r + 0.5) * self.leng
+
         # returns the draw object
         return self.canvas.create_oval(x - dot_width / 2, y - dot_width / 2, x + dot_width / 2, y + dot_width / 2,
                                        fill=ChessGUI.dotColor, width=0)
@@ -143,15 +141,16 @@ class ChessGUI:
     def drawCheck(self):
         check1R, check1C = self.perspConvert(self.checkPos[0][0], self.checkPos[0][1])
         check2R, check2C = self.perspConvert(self.checkPos[1][0], self.checkPos[1][1])
-        # print(self.checkPos)
         dot_width = self.leng * 0.9
         x = (check1C + 0.5) * self.leng
         y = (check1R + 0.5) * self.leng
+
         # returns the draw object
         self.drawnChecks.append(self.canvas.create_oval(x - dot_width / 2, y - dot_width / 2, x + dot_width / 2, y + dot_width / 2,
                                        fill=None, width=self.leng * 0.03, outline="red"))
         x = (check2C + 0.5) * self.leng
         y = (check2R + 0.5) * self.leng
+
         # returns the draw object
         self.drawnChecks.append(
             self.canvas.create_oval(x - dot_width / 2, y - dot_width / 2, x + dot_width / 2, y + dot_width / 2,
@@ -184,7 +183,6 @@ class ChessGUI:
         while self.drawnPieces:
             self.canvas.delete(self.drawnPieces.pop())
 
-        # rn don't worry about player persp
         for rowP in range(ChessGUI.side):
             for colP in range(ChessGUI.side):
                 val = self.ci.board[rowP][colP]
@@ -215,12 +213,3 @@ def raiseTop(window):
     window.update()
     window.attributes('-topmost', 1)
     window.attributes('-topmost', 0)
-
-
-def createGUI():
-    c = ChessGUI(75, None)
-    # c.drawPieces("s", 0)
-
-
-if __name__ == '__main__':
-    createGUI()
