@@ -12,7 +12,7 @@ GUI built with Tkinter<br>
 <img src="/img/chesspic1.jpg" alt="Chess Gam" width="50%">
 
 ### Integration with Stockfish:
-Download the binaries from  for your operating system and move it to the root directory.
+Download the binaries from <a href="https://stockfishchess.org/download/">Stockfish</a> for your operating system and move it to the root directory.
 
 ### Custom Engine:
 Custom engine built with standard chess AI techniques: 
