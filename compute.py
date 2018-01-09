@@ -92,7 +92,7 @@ class Compute:
         next_move, score = self.findMove(-inf, inf, self.ci.board, self.ci.speshuls, 1, False)
         return next_move
 
-    maxDepth = 2
+    maxDepth = 4
     skipProb = 0
 
     #added alphabeta
