@@ -8,6 +8,7 @@ python main.py
 ```
 
 GUI:
+
 <img src="/img/chesspic1.jpg" alt="Chess Gam" width="50%">
 
 Integration with Stockfish:
