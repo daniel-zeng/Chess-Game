@@ -20,5 +20,5 @@ Custom engine built with standard chess AI techniques:
 2. Position evaluation through piece square tables and piece values.
 
 ### Sources:
-Image assets:  (CC, GFDL, BSD, GPL)
+Image assets: <a href="https://en.wikipedia.org/wiki/User:Cburnett">Colin M.L. Burnett</a> (CC, GFDL, BSD, GPL)
 <br>Piece-square tables from <a href="https://github.com/thomasahle/sunfish">Sunfish</a>
