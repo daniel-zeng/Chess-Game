@@ -7,7 +7,7 @@ Running the game:
 python main.py
 ```
 
-GUI:<br>
+### GUI:<br>
 <img src="/img/chesspic1.jpg" alt="Chess Gam" width="50%">
 
 ### Integration with Stockfish:
