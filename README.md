@@ -8,7 +8,7 @@ python main.py
 ```
 
 GUI:
-![Chess Game](/img/chesspic1.jpg?raw=true "Chess Game")
+<img src="/img/chesspic1.jpg" alt="Chess Gam" width="50%">
 
 Integration with Stockfish:
 Download the binaries for your operating system from https://stockfishchess.org/download/ and move to the root directory of the game.
