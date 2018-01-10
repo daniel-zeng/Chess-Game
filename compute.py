@@ -5,12 +5,13 @@ from math import inf
 
 
 class Compute:
+    #updated piece values from genetic paper
     value = {
         'k': 90000,
-        'q': 900,
-        'r': 500,
-        'n': 300,
-        'b': 300,
+        'q': 1710,
+        'r': 824,
+        'n': 521,
+        'b': 572,
         'p': 100
     }
     #Piece square tables from sunfish
@@ -111,8 +112,9 @@ class Compute:
 
         if len(current_moves) == 0:
             ret = 0
+            #checkmate case
             if inCheck:
-                ret = 90000 if currentPlayer == black else -90000
+                ret = Compute.value['k'] if currentPlayer == black else -Compute.value['k']
             if eval_only:
                 return ret
             return None, ret

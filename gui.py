@@ -1,6 +1,6 @@
 from tkinter import *
 from PIL import ImageTk
-from board_utils import owner, KSCAST, QSCAST, white, black, castlingPlaces
+from board_utils import owner, KSCAST, QSCAST, white, black, castlingPlaces, other
 
 
 class ChessGUI:
@@ -65,10 +65,14 @@ class ChessGUI:
                     self.tk.wait_window(self.showPromotion())
                 self.checkPos, self.validmoves = self.ci.submitMove(click2)
 
+                if not self.validmoves:
+                    if self.ci.stockfish == self.ci.speshuls[0] or self.ci.custom_ai == self.ci.speshuls[0]:
+                        self.ci.speshuls[0] = other(self.ci.speshuls[0])
+
+                    self.showEnd("Checkmate" if self.checkPos else "Stalemate")
+
                 self.drawPieces()
 
-                if not self.validmoves:
-                    self.showEnd("Checkmate" if self.checkPos else "Stalemate")
                 return
 
         if val and owner(val) == self.ci.speshuls[0]:
@@ -146,8 +150,9 @@ class ChessGUI:
         y = (check1R + 0.5) * self.leng
 
         # returns the draw object
-        self.drawnChecks.append(self.canvas.create_oval(x - dot_width / 2, y - dot_width / 2, x + dot_width / 2, y + dot_width / 2,
-                                       fill=None, width=self.leng * 0.03, outline="red"))
+        self.drawnChecks.append(
+            self.canvas.create_oval(x - dot_width / 2, y - dot_width / 2, x + dot_width / 2, y + dot_width / 2,
+                                    fill=None, width=self.leng * 0.03, outline="red"))
         x = (check2C + 0.5) * self.leng
         y = (check2R + 0.5) * self.leng
 
@@ -159,7 +164,6 @@ class ChessGUI:
     def removeCheck(self):
         while self.drawnChecks:
             self.canvas.delete(self.drawnChecks.pop())
-
 
     def removeChoiceDots(self):
         while self.drawnDots:

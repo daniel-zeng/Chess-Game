@@ -170,9 +170,7 @@ class ChessInstance:
         move = val.split()[1]
         if prin: print("stockfish", move)
         if move == "(none)":
-            print("Checkmate/Stalemate!")
-            printBoard(self.board, True, True)
-            exit()
+            return
         start, end, promo = processTS(move[:2]), processTS(move[2:4]), move[4:]
         if promo:
             self.speshuls[6] = promo
@@ -181,7 +179,13 @@ class ChessInstance:
     def doCust(self):
         move = self.cust.calcMove()
         if move is None:
-            return isCheck(self.board, self.speshuls, False), None
+            return
         if move[0].lower() == "p" and (move[2][0] == 0 or move[2][0] == 7):
             self.speshuls[6] = 'q'
         applyMove(move, self.board, self.speshuls)
+
+    # def aiEndGame(self):
+    #     isCheckk = isCheck(self.board, self.speshuls, False)
+    #     #swap player for piece drawing
+    #     self.speshuls[0] = other(self.speshuls[0])
+    #     return isCheckk, None
