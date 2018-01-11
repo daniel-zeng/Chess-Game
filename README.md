@@ -7,6 +7,13 @@ Running the game:
 python main.py
 ```
 
+### Dependencies:
+In order to run it requires Python 3 and Pillow
+```
+pip install -r requirements.txt
+```
+
+
 ### GUI:
 GUI built with Tkinter<br>
 <img src="/img/chesspic1.jpg" alt="Chess Gam" width="50%">
